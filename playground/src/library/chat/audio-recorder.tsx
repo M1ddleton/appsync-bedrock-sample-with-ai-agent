@@ -1,14 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { Button, Icon, View, Grid, useTheme } from '@aws-amplify/ui-react';
 import { ReactMic } from 'react-mic';
+import { Storage } from 'aws-amplify';
 
 interface AudioRecorderProps {
-  onRecordingComplete: (audioBlob: Blob) => void;
+  onRecordingComplete: (audioFileUrl: string) => void;
 }
 
 export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [audioBlobUrl, setAudioBlobUrl] = useState('');
+
+  const generatePreSignedUrl = async (audioBlob: Blob) => {
+    try {
+      const result = await Storage.put(`audio-${Date.now()}.webm`, audioBlob, {
+        level: 'public',
+        contentType: 'audio/webm',
+        //bucket: 'awsaudiouploads',
+        progressCallback: (progress) => {
+          console.log(`Uploaded: ${progress.loaded}/${progress.total}`);
+        },
+      });
+      console.log('Audio file uploaded:', result.key); // Log successful upload
+      return result.key;
+    } catch (error) {
+      console.error('Error generating pre-signed URL:', error);
+      throw error;
+    }
+  };
 
   const handleRecording = () => {
     if (!isRecording) {
@@ -32,10 +51,16 @@ export function AudioRecorder({ onRecordingComplete }: AudioRecorderProps) {
     console.log('chunk of real-time data is: ', recordedBlob);
   };
 
-  const onStop = (recordedBlob: { blobURL: React.SetStateAction<string>; blob: Blob }) => {
+  const onStop = async (recordedBlob: { blobURL: React.SetStateAction<string>; blob: Blob }) => {
     console.log('recordedBlob is: ', recordedBlob);
     setAudioBlobUrl(recordedBlob.blobURL);
-    onRecordingComplete(recordedBlob.blob); // Call the onRecordingComplete prop function with the audio blob
+
+    try {
+      const audioFileUrl = await generatePreSignedUrl(recordedBlob.blob);
+      onRecordingComplete(audioFileUrl);
+    } catch (error) {
+      console.error('Error generating pre-signed URL:', error);
+    }
   };
 
   const { tokens } = useTheme();

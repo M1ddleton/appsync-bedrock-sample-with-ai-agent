@@ -98,6 +98,7 @@ type Query @aws_cognito_user_pools {
 }
 
 type Mutation {
+    generateAudioUploadURL: String!
 	createAgent(config: NewAgent!): Agent! @aws_cognito_user_pools
     deleteAgent(id: ID): Agent! @aws_cognito_user_pools
     createAction(config: NewAction): Action!  @aws_cognito_user_pools
