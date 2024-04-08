@@ -22,8 +22,15 @@ import { agentApiEndpoint, cognitoConfig } from './endpoints';
 
 // Load auth config data
 Amplify.configure({ 
-  Auth: cognitoConfig, 
+  Auth: cognitoConfig,
   API: { aws_appsync_graphqlEndpoint: agentApiEndpoint },
+  //region: 'us-east-1',
+  Storage: {
+    AWSS3: {
+      bucket: 'awsaudiouploads',
+      region: 'us-east-1',
+    },
+  },
   aws_appsync_authenticationType: 'AMAZON_COGNITO_USER_POOLS'
 })
 
